@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
   <title>AI Tender Dashboard</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -9,35 +8,22 @@
 
 <h1>🚀 AI Tender Dashboard</h1>
 
-<button id="getTenders">📊 Get Tenders</button>
+<button onclick="getTenders()">Get Tenders</button>
+
+<h2>Available Tenders</h2>
+<div id="tenderList"></div>
 
 <hr>
 
-<h2>📊 Available Tenders</h2>
-<div id="results"></div>
+<h2>Upload BOQ</h2>
+<input type="file" id="boqFile">
+<button id="uploadBtn">Analyze BOQ</button>
+<button id="calcBtn">Calculate Bid</button>
 
-<hr>
-
-<h2>📂 Upload BOQ</h2>
-<input type="file" id="boqFile" />
-
-<button id="uploadBtn">🎯 Analyze BOQ</button>
-<button onclick="calculateBid()">💰 Calculate Bid</button>
-
-<hr>
-
-<h2>🎯 Matching Results</h2>
-<div id="boqMatch"></div>
-
-<h2>💰 Bid Analysis</h2>
-<div id="boqAnalysis"></div>
-
-<hr>
-
-<h2>📜 History</h2>
-<button onclick="loadHistory()">Load History</button>
-<div id="history"></div>
+<h3 id="boqResult"></h3>
+<h3 id="bidResult"></h3>
 
 <script src="script.js"></script>
+
 </body>
 </html>
