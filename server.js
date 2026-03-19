@@ -15,31 +15,30 @@ const upload = multer({ dest: "uploads/" });
 // SERVE FRONTEND
 app.use(express.static(__dirname));
 
-// HOME ROUTE (VERY IMPORTANT)
+// HOME ROUTE
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// SAMPLE TENDERS
-const tenders = [
-  {
-    title: "Prefab Building Work",
-    location: "Delhi",
-    budget: 2000000
-  },
-  {
-    title: "Steel Shed Work",
-    location: "Bhopal",
-    budget: 1500000
-  }
-];
-
-// GET TENDERS
+// 🔥 SMART TENDERS (DYNAMIC)
 app.get("/tenders", (req, res) => {
+  const cities = ["Delhi", "Bhopal", "Mumbai", "Indore"];
+  const works = ["Prefab Building", "Steel Shed", "Road Work", "Bridge Work"];
+
+  const tenders = [];
+
+  for (let i = 0; i < 5; i++) {
+    tenders.push({
+      title: works[Math.floor(Math.random() * works.length)] + " Work",
+      location: cities[Math.floor(Math.random() * cities.length)],
+      budget: Math.floor(Math.random() * 5000000) + 500000
+    });
+  }
+
   res.json(tenders);
 });
 
-// UPLOAD BOQ
+// 🔥 BOQ ANALYSIS
 app.post("/upload-boq", upload.single("file"), (req, res) => {
   try {
     const buffer = fs.readFileSync(req.file.path);
@@ -61,7 +60,7 @@ app.post("/upload-boq", upload.single("file"), (req, res) => {
   }
 });
 
-// CALCULATE BID
+// 🔥 BID CALCULATION
 app.post("/calculate-bid", upload.single("file"), (req, res) => {
   try {
     const buffer = fs.readFileSync(req.file.path);
@@ -90,7 +89,7 @@ app.post("/calculate-bid", upload.single("file"), (req, res) => {
   }
 });
 
-// PORT (RENDER FIX)
+// PORT FIX
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {

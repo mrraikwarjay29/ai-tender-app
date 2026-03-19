@@ -1,4 +1,4 @@
-// ✅ GET TENDERS
+// GET TENDERS
 async function getTenders() {
   const res = await fetch("/tenders");
   const data = await res.json();
@@ -6,11 +6,14 @@ async function getTenders() {
   let html = "";
 
   data.forEach(t => {
+    const score = Math.floor(Math.random() * 50) + 50;
+
     html += `
       <div class="card">
         <h3>${t.title}</h3>
         <p>📍 ${t.location}</p>
         <p>💰 ₹${t.budget}</p>
+        <p>🎯 Match Score: ${score}%</p>
       </div>
     `;
   });
@@ -18,7 +21,7 @@ async function getTenders() {
   document.getElementById("tenderList").innerHTML = html;
 }
 
-// ✅ ANALYZE BOQ
+// ANALYZE BOQ
 document.getElementById("uploadBtn").addEventListener("click", async () => {
   const file = document.getElementById("boqFile").files[0];
 
@@ -36,7 +39,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     `Total Cost: ₹${data.totalCost}`;
 });
 
-// ✅ CALCULATE BID
+// CALCULATE BID
 document.getElementById("calcBtn").addEventListener("click", async () => {
   const file = document.getElementById("boqFile").files[0];
 
