@@ -1,38 +1,159 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Tender Pro</title>
-  <link rel="stylesheet" href="style.css">
+    <title>AI Tender Pro</title>
 </head>
 <body>
 
 <h1>🚀 AI Tender Pro</h1>
 
-<div>
-  <input id="user" placeholder="username">
-  <input id="pass" placeholder="password">
-  <button onclick="login()">Login</button>
-</div>
+<!-- LOGIN UI -->
+<input type="text" placeholder="username">
+<input type="password" placeholder="password">
+<button>Login</button>
 
 <hr>
 
-<button onclick="getTenders()">Get Tenders</button>
-<div id="tenderList"></div>
+<!-- GET TENDERS -->
+<button onclick="loadTenders()">Get Tenders</button>
 
 <hr>
 
-<input type="file" id="boqFile">
-<button onclick="analyze()">Analyze</button>
-<button onclick="calculate()">Bid</button>
-<button onclick="match()">Match</button>
+<!-- MATCH -->
+<h3>🎯 Match Tenders</h3>
+<input type="text" id="matchLocation" placeholder="Location">
+<input type="number" id="matchBudget" placeholder="Max Budget">
+<button onclick="matchTenders()">Match</button>
 
+<hr>
+
+<!-- UPLOAD -->
+<h3>📂 Upload Excel</h3>
+<input type="file" id="fileInput">
+<button onclick="uploadFile()">Analyze</button>
+
+<hr>
+
+<!-- BID -->
+<h3>💰 Calculate Bid</h3>
+<input type="number" id="baseCost" placeholder="Enter cost">
+<button onclick="calculateBid()">Bid</button>
+
+<hr>
+
+<!-- HISTORY -->
+<button onclick="loadHistory()">Load Stats</button>
+
+<hr>
+
+<!-- OUTPUT -->
 <div id="output"></div>
 
-<hr>
+<script>
 
-<button onclick="loadStats()">Load Stats</button>
-<div id="stats"></div>
+// GET TENDERS
+async function loadTenders() {
+    const res = await fetch("http://localhost:3000/tenders");
+    const data = await res.json();
 
-<script src="script.js"></script>
+    let html = "<h2>📊 Tenders</h2>";
+
+    data.forEach(t => {
+        html += `
+            <div style="border:1px solid black; padding:10px; margin:10px;">
+                <b>${t.title}</b><br>
+                📍 ${t.location}<br>
+                💰 ₹${t.amount}
+            </div>
+        `;
+    });
+
+    document.getElementById("output").innerHTML = html;
+}
+
+// MATCH
+async function matchTenders() {
+    const location = document.getElementById("matchLocation").value;
+    const maxBudget = document.getElementById("matchBudget").value;
+
+    const res = await fetch("http://localhost:3000/match", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ location, maxBudget })
+    });
+
+    const data = await res.json();
+
+    let html = "<h2>🎯 Best Matches</h2>";
+
+    data.forEach(t => {
+        html += `
+            <div style="border:1px solid green; padding:10px; margin:10px;">
+                <b>${t.title}</b><br>
+                📍 ${t.location}<br>
+                💰 ₹${t.amount}
+            </div>
+        `;
+    });
+
+    document.getElementById("output").innerHTML = html;
+}
+
+// UPLOAD
+async function uploadFile() {
+    const file = document.getElementById("fileInput").files[0];
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("http://localhost:3000/upload", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await res.json();
+
+    alert("Rows uploaded: " + data.rows);
+}
+
+// BID
+async function calculateBid() {
+    const baseCost = document.getElementById("baseCost").value;
+
+    const res = await fetch("http://localhost:3000/calculate", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ baseCost })
+    });
+
+    const data = await res.json();
+
+    alert("Final Bid: ₹" + data.bid);
+}
+
+// HISTORY
+async function loadHistory() {
+    const res = await fetch("http://localhost:3000/history");
+    const data = await res.json();
+
+    let html = "<h2>📈 History</h2>";
+
+    data.forEach(h => {
+        html += `
+            <div>
+                Cost: ₹${h.baseCost} → Bid: ₹${h.bid}
+            </div>
+        `;
+    });
+
+    document.getElementById("output").innerHTML = html;
+}
+
+</script>
+
 </body>
 </html>

@@ -1,15 +1,12 @@
-async function login() {
-  const res = await fetch("/login", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      username: document.getElementById("user").value,
-      password: document.getElementById("pass").value
-    })
-  });
+function login() {
+  const u = document.getElementById("username").value;
+  const p = document.getElementById("password").value;
 
-  const data = await res.json();
-  alert(data.success ? "Login success" : "Wrong login");
+  if (u === "admin" && p === "1234") {
+    alert("Login successful");
+  } else {
+    alert("Wrong credentials");
+  }
 }
 
 async function getTenders() {
@@ -17,57 +14,61 @@ async function getTenders() {
   const data = await res.json();
 
   let html = "";
+
   data.forEach(t => {
-    html += `<div class="card">${t.title} - ₹${t.budget}</div>`;
+    html += `
+      <div class="card">
+        <h3>${t.title}</h3>
+        <p>${t.location}</p>
+        <p>₹${t.amount}</p>
+      </div>
+    `;
   });
 
-  document.getElementById("tenderList").innerHTML = html;
+  document.getElementById("tenders").innerHTML = html;
 }
 
-async function analyze() {
-  const file = document.getElementById("boqFile").files[0];
-  const fd = new FormData();
-  fd.append("file", file);
+async function analyzeBOQ() {
+  const file = document.getElementById("file").files[0];
+  const formData = new FormData();
 
-  const res = await fetch("/upload-boq", { method: "POST", body: fd });
-  const d = await res.json();
+  formData.append("file", file);
 
-  document.getElementById("output").innerText = "Cost ₹" + d.totalCost;
-}
-
-async function calculate() {
-  const file = document.getElementById("boqFile").files[0];
-  const fd = new FormData();
-  fd.append("file", file);
-
-  const res = await fetch("/calculate-bid", { method: "POST", body: fd });
-  const d = await res.json();
-
-  document.getElementById("output").innerText =
-    `Bid ₹${d.bidPrice}, Profit ₹${d.profit}`;
-
-  await fetch("/save-history", {
+  const res = await fetch("/upload", {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(d)
+    body: formData
   });
+
+  const data = await res.json();
+
+  alert("Rows: " + data.rows);
 }
 
-async function match() {
-  const file = document.getElementById("boqFile").files[0];
-  const fd = new FormData();
-  fd.append("file", file);
+async function calculateBid() {
+  const baseCost = prompt("Enter cost");
 
-  const res = await fetch("/match-tender", { method: "POST", body: fd });
-  const d = await res.json();
+  const res = await fetch("/calculate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ baseCost: Number(baseCost) })
+  });
 
-  alert(`Best: ${d.best.title} (${d.best.match}%)`);
+  const data = await res.json();
+
+  alert("Bid: ₹" + data.bid);
 }
 
-async function loadStats() {
-  const res = await fetch("/stats");
-  const d = await res.json();
+async function loadHistory() {
+  const res = await fetch("/history");
+  const data = await res.json();
 
-  document.getElementById("stats").innerText =
-    `Total Bids: ${d.total}, Avg Profit: ₹${d.avgProfit}`;
+  let html = "<h3>History</h3>";
+
+  data.forEach(h => {
+    html += `<p>₹${h.baseCost} → ₹${h.bid}</p>`;
+  });
+
+  document.getElementById("history").innerHTML = html;
 }

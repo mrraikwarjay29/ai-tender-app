@@ -2,77 +2,75 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const XLSX = require("xlsx");
-const path = require("path");
-const fs = require("fs");
 
-// 🔥 LOWDB SETUP (FIXED)
-const { Low, JSONFile } = require("lowdb");
+// LOWDB (LATEST VERSION FIXED)
+const { Low } = require("lowdb");
+const { JSONFile } = require("lowdb/node");
 
+const app = express();
+const PORT = 3000;
+
+// DB SETUP (FIXED)
 const adapter = new JSONFile("db.json");
-const db = new Low(adapter);
+const db = new Low(adapter, { tenders: [], history: [] });
 
-// Initialize DB
 async function initDB() {
   await db.read();
-
-  db.data = db.data || {
-    tenders: [],
-    history: []
-  };
-
   await db.write();
 }
-
 initDB();
 
-// ---------------- APP ----------------
-const app = express();
-
+// MIDDLEWARE
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// ---------------- FILE UPLOAD ----------------
+// FILE UPLOAD
 const upload = multer({ dest: "uploads/" });
 
-// ---------------- SAMPLE TENDERS ----------------
+// SAMPLE TENDERS
 let tenders = [
   { title: "Prefab Building Work", location: "Delhi", amount: 2000000 },
-  { title: "Steel Shed Work", location: "Bhopal", amount: 1500000 }
+  { title: "Steel Shed Work", location: "Bhopal", amount: 1500000 },
+  { title: "Warehouse Construction", location: "Mumbai", amount: 5000000 },
+  { title: "Road Construction Project", location: "Delhi", amount: 8000000 }
 ];
 
-// ---------------- ROUTES ----------------
+// ================= ROUTES =================
 
-// Get tenders
+// GET TENDERS
 app.get("/tenders", (req, res) => {
   res.json(tenders);
 });
 
-// Upload BOQ
-app.post("/upload", upload.single("file"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
+// MATCH TENDERS
+app.post("/match", (req, res) => {
+  const { location, maxBudget } = req.body;
 
-  const filePath = req.file.path;
+  let matched = tenders.filter(t => {
+    return (
+      (!location || t.location.toLowerCase() === location.toLowerCase()) &&
+      (!maxBudget || t.amount <= maxBudget)
+    );
+  });
 
-  try {
-    const workbook = XLSX.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+  matched.sort((a, b) => b.amount - a.amount);
 
-    res.json({
-      message: "File processed successfully",
-      rows: data.length,
-      preview: data.slice(0, 5)
-    });
-
-  } catch (error) {
-    res.status(500).json({ error: "Error reading file" });
-  }
+  res.json(matched);
 });
 
-// Calculate Bid
+// UPLOAD EXCEL
+app.post("/upload", upload.single("file"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+  const workbook = XLSX.readFile(req.file.path);
+  const sheet = workbook.SheetNames[0];
+  const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet]);
+
+  res.json({ rows: data.length });
+});
+
+// CALCULATE BID
 app.post("/calculate", async (req, res) => {
   const { baseCost } = req.body;
 
@@ -80,10 +78,8 @@ app.post("/calculate", async (req, res) => {
     return res.status(400).json({ error: "Base cost required" });
   }
 
-  const profitMargin = 0.15;
-  const bid = baseCost + baseCost * profitMargin;
+  const bid = baseCost * 1.15;
 
-  // Save to DB
   await db.read();
   db.data.history.push({
     baseCost,
@@ -95,15 +91,14 @@ app.post("/calculate", async (req, res) => {
   res.json({ bid });
 });
 
-// Get History
+// GET HISTORY
 app.get("/history", async (req, res) => {
   await db.read();
   res.json(db.data.history);
 });
 
-// ---------------- SERVER ----------------
-const PORT = process.env.PORT || 3000;
+// ================= START SERVER =================
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("Server running on port " + PORT);
+app.listen(PORT, () => {
+  console.log("🚀 Server running on http://localhost:" + PORT);
 });
