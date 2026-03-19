@@ -1,4 +1,4 @@
-// GET TENDERS (FIXED WITH RETRY)
+// GET TENDERS (RETRY FIX)
 async function getTenders() {
   let attempts = 0;
 
@@ -26,7 +26,6 @@ async function getTenders() {
       return;
 
     } catch (err) {
-      console.log("Retrying...");
       await new Promise(r => setTimeout(r, 2000));
       attempts++;
     }
@@ -35,3 +34,62 @@ async function getTenders() {
   document.getElementById("tenderList").innerHTML =
     "<p>⚠️ Server waking up... click again</p>";
 }
+
+// ANALYZE BOQ
+document.getElementById("uploadBtn").addEventListener("click", async () => {
+  const file = document.getElementById("boqFile").files[0];
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch("/upload-boq", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+
+  document.getElementById("boqResult").innerHTML =
+    `Total Cost: ₹${data.totalCost}`;
+});
+
+// CALCULATE BID
+document.getElementById("calcBtn").addEventListener("click", async () => {
+  const file = document.getElementById("boqFile").files[0];
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch("/calculate-bid", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+
+  document.getElementById("bidResult").innerHTML = `
+    <p>Total Cost: ₹${data.totalCost}</p>
+    <p>Profit: ₹${data.profit}</p>
+    <p><b>Bid Price: ₹${data.bidPrice}</b></p>
+  `;
+});
+
+// 🔥 AI MATCHING
+document.getElementById("matchBtn").addEventListener("click", async () => {
+  const file = document.getElementById("boqFile").files[0];
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch("/match-tender", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+
+  document.getElementById("matchResult").innerHTML = `
+    <p>🏆 Best Tender: ${data.best.title}</p>
+    <p>🎯 Match Score: ${data.best.match}%</p>
+  `;
+});
