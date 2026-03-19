@@ -8,11 +8,8 @@ const fs = require("fs");
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// SERVE FRONTEND
 app.use(express.static(__dirname));
 
-// FILE UPLOAD
 const upload = multer({ dest: "uploads/" });
 
 // HOME
@@ -20,17 +17,25 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// HEALTH CHECK
-app.get("/health", (req, res) => {
-  res.send("OK");
-});
+// HEALTH
+app.get("/health", (req, res) => res.send("OK"));
 
-// 🔥 STATIC TENDERS
+// 🔥 SMART TENDERS (dynamic)
 app.get("/tenders", (req, res) => {
-  res.json([
-    { title: "Prefab Building Work", location: "Delhi", budget: 2000000 },
-    { title: "Steel Shed Work", location: "Bhopal", budget: 1500000 }
-  ]);
+  const cities = ["Delhi", "Bhopal", "Mumbai", "Indore"];
+  const works = ["Prefab Building", "Steel Shed", "Road Work", "Bridge Work"];
+
+  const tenders = [];
+
+  for (let i = 0; i < 5; i++) {
+    tenders.push({
+      title: works[Math.floor(Math.random() * works.length)] + " Work",
+      location: cities[Math.floor(Math.random() * cities.length)],
+      budget: Math.floor(Math.random() * 5000000) + 500000
+    });
+  }
+
+  res.json(tenders);
 });
 
 // 🔥 BOQ ANALYSIS
@@ -114,6 +119,31 @@ app.post("/match-tender", upload.single("file"), (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// 🔥 SAVE HISTORY
+app.post("/save-history", (req, res) => {
+  const file = "history.json";
+  let history = [];
+
+  if (fs.existsSync(file)) {
+    history = JSON.parse(fs.readFileSync(file));
+  }
+
+  history.push(req.body);
+  fs.writeFileSync(file, JSON.stringify(history, null, 2));
+
+  res.json({ message: "Saved" });
+});
+
+// 🔥 GET HISTORY
+app.get("/history", (req, res) => {
+  const file = "history.json";
+
+  if (!fs.existsSync(file)) return res.json([]);
+
+  const data = JSON.parse(fs.readFileSync(file));
+  res.json(data);
 });
 
 // PORT FIX

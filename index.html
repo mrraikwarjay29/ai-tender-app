@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Tender Dashboard</title>
+  <title>AI Tender Pro</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>🚀 AI Tender Dashboard</h1>
+<h1>🚀 AI Tender Pro Dashboard</h1>
 
-<button onclick="getTenders()">Get Tenders</button>
+<button onclick="getTenders()">📊 Get Tenders</button>
 
-<h2>Available Tenders</h2>
+<h2>Tenders</h2>
 <div id="tenderList"></div>
 
 <hr>
@@ -20,15 +20,20 @@
 
 <br><br>
 
-<button id="uploadBtn">Analyze BOQ</button>
-<button id="calcBtn">Calculate Bid</button>
-<button id="matchBtn">Find Best Tender</button>
+<button onclick="analyze()">Analyze</button>
+<button onclick="calculate()">Calculate Bid</button>
+<button onclick="match()">Best Tender</button>
 
 <h3 id="boqResult"></h3>
 <h3 id="bidResult"></h3>
 <h3 id="matchResult"></h3>
 
-<script src="script.js"></script>
+<hr>
 
+<h2>📜 History</h2>
+<button onclick="loadHistory()">Load History</button>
+<div id="history"></div>
+
+<script src="script.js"></script>
 </body>
 </html>
