@@ -12,22 +12,26 @@ app.use(express.static(__dirname));
 
 const upload = multer({ dest: "uploads/" });
 
-// HOME
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+// ================= USER SYSTEM =================
+let users = [{ username: "admin", password: "1234" }];
+
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  const user = users.find(u => u.username === username && u.password === password);
+
+  if (user) res.json({ success: true });
+  else res.json({ success: false });
 });
 
-// HEALTH
-app.get("/health", (req, res) => res.send("OK"));
-
-// 🔥 SMART TENDERS (dynamic)
+// ================= TENDERS =================
 app.get("/tenders", (req, res) => {
   const cities = ["Delhi", "Bhopal", "Mumbai", "Indore"];
-  const works = ["Prefab Building", "Steel Shed", "Road Work", "Bridge Work"];
+  const works = ["Prefab", "Steel", "Road", "Bridge"];
 
   const tenders = [];
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     tenders.push({
       title: works[Math.floor(Math.random() * works.length)] + " Work",
       location: cities[Math.floor(Math.random() * cities.length)],
@@ -38,117 +42,111 @@ app.get("/tenders", (req, res) => {
   res.json(tenders);
 });
 
-// 🔥 BOQ ANALYSIS
+// ================= BOQ =================
 app.post("/upload-boq", upload.single("file"), (req, res) => {
-  try {
-    const buffer = fs.readFileSync(req.file.path);
-    const workbook = XLSX.read(buffer, { type: "buffer" });
+  const buffer = fs.readFileSync(req.file.path);
+  const workbook = XLSX.read(buffer, { type: "buffer" });
 
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(sheet);
 
-    let totalCost = 0;
+  let totalCost = 0;
 
-    data.forEach(item => {
-      totalCost += (item.Quantity || 0) * (item.Rate || 0);
-    });
+  data.forEach(item => {
+    totalCost += (item.Quantity || 0) * (item.Rate || 0);
+  });
 
-    res.json({ totalCost });
-
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json({ totalCost });
 });
 
-// 🔥 BID CALCULATION
+// ================= BID =================
 app.post("/calculate-bid", upload.single("file"), (req, res) => {
-  try {
-    const buffer = fs.readFileSync(req.file.path);
-    const workbook = XLSX.read(buffer, { type: "buffer" });
+  const buffer = fs.readFileSync(req.file.path);
+  const workbook = XLSX.read(buffer, { type: "buffer" });
 
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(sheet);
 
-    let totalCost = 0;
+  let totalCost = 0;
 
-    data.forEach(item => {
-      totalCost += (item.Quantity || 0) * (item.Rate || 0);
-    });
+  data.forEach(item => {
+    totalCost += (item.Quantity || 0) * (item.Rate || 0);
+  });
 
-    const profit = totalCost * 0.15;
-    const bidPrice = totalCost + profit;
+  const profit = totalCost * 0.15;
+  const bidPrice = totalCost + profit;
 
-    res.json({
-      totalCost: Math.round(totalCost),
-      profit: Math.round(profit),
-      bidPrice: Math.round(bidPrice)
-    });
-
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json({
+    totalCost: Math.round(totalCost),
+    bidPrice: Math.round(bidPrice),
+    profit: Math.round(profit)
+  });
 });
 
-// 🔥 AI MATCHING
+// ================= AI MATCH =================
 app.post("/match-tender", upload.single("file"), (req, res) => {
-  try {
-    const buffer = fs.readFileSync(req.file.path);
-    const workbook = XLSX.read(buffer, { type: "buffer" });
+  const buffer = fs.readFileSync(req.file.path);
+  const workbook = XLSX.read(buffer, { type: "buffer" });
 
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(sheet);
 
-    let workType = "General";
+  let type = "General";
 
-    data.forEach(item => {
-      const name = (item.Item || "").toLowerCase();
+  data.forEach(item => {
+    const name = (item.Item || "").toLowerCase();
+    if (name.includes("steel")) type = "Steel";
+    if (name.includes("cement")) type = "Prefab";
+  });
 
-      if (name.includes("steel")) workType = "Steel Shed";
-      if (name.includes("cement")) workType = "Prefab Building";
-    });
+  const result = {
+    title: type + " Work",
+    match: Math.floor(Math.random() * 20) + 80
+  };
 
-    const tenders = [
-      { title: "Prefab Building Work", match: workType === "Prefab Building" ? 90 : 60 },
-      { title: "Steel Shed Work", match: workType === "Steel Shed" ? 92 : 65 }
-    ];
-
-    const best = tenders.sort((a, b) => b.match - a.match)[0];
-
-    res.json({ best });
-
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json({ best: result });
 });
 
-// 🔥 SAVE HISTORY
+// ================= HISTORY =================
 app.post("/save-history", (req, res) => {
   const file = "history.json";
-  let history = [];
-
-  if (fs.existsSync(file)) {
-    history = JSON.parse(fs.readFileSync(file));
-  }
+  let history = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
 
   history.push(req.body);
   fs.writeFileSync(file, JSON.stringify(history, null, 2));
 
-  res.json({ message: "Saved" });
+  res.json({ ok: true });
 });
 
-// 🔥 GET HISTORY
 app.get("/history", (req, res) => {
   const file = "history.json";
-
   if (!fs.existsSync(file)) return res.json([]);
 
-  const data = JSON.parse(fs.readFileSync(file));
-  res.json(data);
+  res.json(JSON.parse(fs.readFileSync(file)));
 });
 
-// PORT FIX
+// ================= STATS =================
+app.get("/stats", (req, res) => {
+  const file = "history.json";
+
+  if (!fs.existsSync(file)) {
+    return res.json({ total: 0, avgProfit: 0 });
+  }
+
+  const data = JSON.parse(fs.readFileSync(file));
+
+  let total = data.length;
+  let profit = data.reduce((sum, d) => sum + (d.profit || 0), 0);
+
+  res.json({
+    total,
+    avgProfit: total ? Math.round(profit / total) : 0
+  });
+});
+
+// ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("Server running on port " + PORT);
+  console.log("Running on " + PORT);
 });

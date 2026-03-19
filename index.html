@@ -6,33 +6,32 @@
 </head>
 <body>
 
-<h1>🚀 AI Tender Pro Dashboard</h1>
+<h1>🚀 AI Tender Pro</h1>
 
-<button onclick="getTenders()">📊 Get Tenders</button>
+<div>
+  <input id="user" placeholder="username">
+  <input id="pass" placeholder="password">
+  <button onclick="login()">Login</button>
+</div>
 
-<h2>Tenders</h2>
+<hr>
+
+<button onclick="getTenders()">Get Tenders</button>
 <div id="tenderList"></div>
 
 <hr>
 
-<h2>Upload BOQ</h2>
 <input type="file" id="boqFile">
-
-<br><br>
-
 <button onclick="analyze()">Analyze</button>
-<button onclick="calculate()">Calculate Bid</button>
-<button onclick="match()">Best Tender</button>
+<button onclick="calculate()">Bid</button>
+<button onclick="match()">Match</button>
 
-<h3 id="boqResult"></h3>
-<h3 id="bidResult"></h3>
-<h3 id="matchResult"></h3>
+<div id="output"></div>
 
 <hr>
 
-<h2>📜 History</h2>
-<button onclick="loadHistory()">Load History</button>
-<div id="history"></div>
+<button onclick="loadStats()">Load Stats</button>
+<div id="stats"></div>
 
 <script src="script.js"></script>
 </body>
