@@ -3,79 +3,77 @@ const cors = require("cors");
 const multer = require("multer");
 const XLSX = require("xlsx");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ FILE UPLOAD SETUP
+// FILE UPLOAD
 const upload = multer({ dest: "uploads/" });
 
-// ✅ SERVE FRONTEND (VERY IMPORTANT)
+// SERVE FRONTEND
 app.use(express.static(__dirname));
 
-// ✅ DEFAULT ROUTE FIX (IMPORTANT)
+// HOME ROUTE (VERY IMPORTANT)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ✅ SAMPLE TENDER DATA
-let tenders = [
+// SAMPLE TENDERS
+const tenders = [
   {
     title: "Prefab Building Work",
-    department: "PWD",
     location: "Delhi",
-    budget: 2000000,
-    deadline: "25 March"
+    budget: 2000000
   },
   {
     title: "Steel Shed Work",
-    department: "Railways",
     location: "Bhopal",
-    budget: 1500000,
-    deadline: "28 March"
+    budget: 1500000
   }
 ];
 
-// ✅ GET TENDERS
+// GET TENDERS
 app.get("/tenders", (req, res) => {
   res.json(tenders);
 });
 
-// ✅ BOQ UPLOAD + ANALYSIS
+// UPLOAD BOQ
 app.post("/upload-boq", upload.single("file"), (req, res) => {
   try {
-    const workbook = XLSX.readFile(req.file.path);
+    const buffer = fs.readFileSync(req.file.path);
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(sheet);
 
     let totalCost = 0;
 
     data.forEach(item => {
-      totalCost += item.Quantity * item.Rate;
+      totalCost += (item.Quantity || 0) * (item.Rate || 0);
     });
 
-    res.json({
-      totalCost: totalCost,
-      message: "BOQ analyzed successfully"
-    });
+    res.json({ totalCost });
 
   } catch (err) {
-    res.status(500).json({ error: "Error processing BOQ" });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ BID CALCULATION
+// CALCULATE BID
 app.post("/calculate-bid", upload.single("file"), (req, res) => {
   try {
-    const workbook = XLSX.readFile(req.file.path);
+    const buffer = fs.readFileSync(req.file.path);
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(sheet);
 
     let totalCost = 0;
 
     data.forEach(item => {
-      totalCost += item.Quantity * item.Rate;
+      totalCost += (item.Quantity || 0) * (item.Rate || 0);
     });
 
     const profit = totalCost * 0.15;
@@ -83,16 +81,16 @@ app.post("/calculate-bid", upload.single("file"), (req, res) => {
 
     res.json({
       totalCost: Math.round(totalCost),
-      bidPrice: Math.round(bidPrice),
-      profit: Math.round(profit)
+      profit: Math.round(profit),
+      bidPrice: Math.round(bidPrice)
     });
 
   } catch (err) {
-    res.status(500).json({ error: "Error calculating bid" });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ PORT FIX FOR RENDER
+// PORT (RENDER FIX)
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
