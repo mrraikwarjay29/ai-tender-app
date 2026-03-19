@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AI Tender Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>🚀 AI Tender Dashboard</h1>
+
+<button id="getTenders">📊 Get Tenders</button>
+
+<hr>
+
+<h2>📊 Available Tenders</h2>
+<div id="results"></div>
+
+<hr>
+
+<h2>📂 Upload BOQ</h2>
+<input type="file" id="boqFile" />
+
+<button id="uploadBtn">🎯 Analyze BOQ</button>
+<button onclick="calculateBid()">💰 Calculate Bid</button>
+
+<hr>
+
+<h2>🎯 Matching Results</h2>
+<div id="boqMatch"></div>
+
+<h2>💰 Bid Analysis</h2>
+<div id="boqAnalysis"></div>
+
+<hr>
+
+<h2>📜 History</h2>
+<button onclick="loadHistory()">Load History</button>
+<div id="history"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
